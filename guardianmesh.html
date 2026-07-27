@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GuardianMesh AI — The Network That Doesn't Go Down</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void: #090d16;
+    --panel: #101827;
+    --panel-2: #16213a;
+    --panel-border: rgba(140,158,196,0.14);
+    --cyan: #4cc9c0;
+    --cyan-dim: rgba(76,201,192,0.35);
+    --amber: #f2a93b;
+    --red: #e3554a;
+    --text-hi: #eef1f8;
+    --text-mid: #b7c1d9;
+    --text-low: #6e7a95;
+    --mono: 'IBM Plex Mono', monospace;
+    --display: 'Space Grotesk', sans-serif;
+    --body: 'Inter', sans-serif;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background: var(--void);
+    color: var(--text-hi);
+    font-family: var(--body);
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  ::selection{ background: var(--cyan); color:#04120f; }
+
+  a{ color:inherit; text-decoration:none; }
+  button{ font-family:inherit; cursor:pointer; }
+
+  :focus-visible{
+    outline: 2px solid var(--cyan);
+    outline-offset: 3px;
+  }
+
+  .wrap{ max-width:1240px; margin:0 auto; padding:0 32px; }
+
+  /* ---------- background texture ---------- */
+  .grain{
+    position:fixed; inset:0; pointer-events:none; z-index:1;
+    background-image:
+      linear-gradient(rgba(140,158,196,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(140,158,196,0.045) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 90%);
+  }
+
+  /* ---------- nav ---------- */
+  header{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    padding: 18px 0;
+    transition: background .4s ease, border-color .4s ease, padding .3s ease;
+    border-bottom: 1px solid transparent;
+  }
+  header.scrolled{
+    background: rgba(9,13,22,0.85);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--panel-border);
+    padding: 12px 0;
+  }
+  nav{ display:flex; align-items:center; justify-content:space-between; }
+  .logo{ display:flex; align-items:center; gap:10px; font-family:var(--display); font-weight:600; font-size:1.05rem; letter-spacing:.01em; }
+  .logo-mark{ width:26px; height:26px; position:relative; flex-shrink:0; }
+  .logo-mark svg{ width:100%; height:100%; display:block; }
+  .nav-links{ display:flex; align-items:center; gap:34px; }
+  .nav-links a{
+    font-size:.86rem; color:var(--text-mid); font-weight:500;
+    position:relative; padding:4px 0; transition:color .2s ease;
+  }
+  .nav-links a::after{
+    content:''; position:absolute; left:0; bottom:0; width:0; height:1px;
+    background:var(--cyan); transition:width .25s ease;
+  }
+  .nav-links a:hover{ color:var(--text-hi); }
+  .nav-links a:hover::after{ width:100%; }
+  .nav-status{
+    display:flex; align-items:center; gap:8px;
+    font-family:var(--mono); font-size:.72rem; color:var(--cyan);
+    border:1px solid var(--cyan-dim); padding:6px 12px; border-radius:100px;
+    letter-spacing:.04em;
+  }
+  .dot{
+    width:6px; height:6px; border-radius:50%; background:var(--cyan);
+    box-shadow:0 0 0 0 rgba(76,201,192,.6);
+    animation: dotpulse 2.2s ease-out infinite;
+  }
+  @keyframes dotpulse{
+    0%{ box-shadow:0 0 0 0 rgba(76,201,192,.55); }
+    70%{ box-shadow:0 0 0 7px rgba(76,201,192,0); }
+    100%{ box-shadow:0 0 0 0 rgba(76,201,192,0); }
+  }
+  .nav-links-mobile-hide{ }
+  @media (max-width: 860px){ .nav-links{ display:none; } }
+
+  /* ---------- ticker ---------- */
+  .ticker-bar{
+    position:fixed; top:0; left:0; right:0; z-index:99;
+    background: var(--panel); border-bottom:1px solid var(--panel-border);
+    overflow:hidden; height:30px; display:flex; align-items:center;
+    transform: translateY(0); transition: transform .4s ease;
+  }
+  header.scrolled ~ .ticker-bar{ transform: translateY(-30px); }
+  .ticker-track{
+    display:flex; gap:48px; white-space:nowrap;
+    animation: ticker 32s linear infinite;
+    font-family:var(--mono); font-size:.72rem; color:var(--text-low); letter-spacing:.02em;
+    padding-left:100%;
+  }
+  .ticker-track span{ display:flex; align-items:center; gap:8px; }
+  .ticker-track b{ color:var(--amber); font-weight:600; }
+  @keyframes ticker{ from{ transform:translateX(0); } to{ transform:translateX(-100%); } }
+
+  /* ---------- hero ---------- */
+  .hero{
+    position:relative; min-height:100vh; display:flex; flex-direction:column;
+    justify-content:center; padding-top:120px; padding-bottom:60px; overflow:hidden;
+  }
+  .hero-bg{
+    position:absolute; inset:0; z-index:0;
+    opacity:.9;
+  }
+  .hero-bg svg{ width:100%; height:100%; display:block; }
+  .hero-fade{
+    position:absolute; inset:0; z-index:1; pointer-events:none;
+    background: radial-gradient(ellipse 70% 55% at 50% 42%, transparent 0%, rgba(9,13,22,0.55) 60%, var(--void) 100%);
+  }
+  .hero-content{ position:relative; z-index:2; text-align:center; }
+  .eyebrow{
+    font-family:var(--mono); font-size:.78rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--cyan); margin-bottom:22px; display:flex; align-items:center; justify-content:center; gap:10px;
+    opacity:0; animation: rise .8s ease .1s forwards;
+  }
+  .eyebrow::before, .eyebrow::after{ content:''; width:26px; height:1px; background:var(--cyan-dim); }
+  h1{
+    font-family:var(--display); font-weight:700;
+    font-size: clamp(2.4rem, 5.6vw, 5rem);
+    line-height:1.04; letter-spacing:-.01em;
+    max-width:920px; margin:0 auto 22px;
+    opacity:0; animation: rise .9s ease .25s forwards;
+  }
+  h1 .accent{ color:var(--cyan); }
+  .hero-sub{
+    font-size:1.08rem; color:var(--text-mid); max-width:560px; margin:0 auto 40px;
+    opacity:0; animation: rise .9s ease .4s forwards;
+  }
+  @keyframes rise{ from{ opacity:0; transform:translateY(16px);} to{ opacity:1; transform:translateY(0);} }
+
+  .hero-actions{
+    display:flex; gap:16px; justify-content:center; flex-wrap:wrap;
+    opacity:0; animation: rise .9s ease .55s forwards;
+  }
+  .btn{
+    font-family:var(--body); font-weight:600; font-size:.92rem;
+    padding:14px 28px; border-radius:8px; border:1px solid transparent;
+    transition: transform .2s ease, box-shadow .3s ease, background .25s ease, border-color .25s ease;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-primary{
+    background: var(--cyan); color:#04120f;
+    box-shadow: 0 0 0 0 rgba(76,201,192,.5);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 8px 26px rgba(76,201,192,.28); }
+  .btn-ghost{
+    background:transparent; color:var(--text-hi); border-color:var(--panel-border);
+  }
+  .btn-ghost:hover{ border-color:var(--cyan-dim); background:rgba(76,201,192,.06); transform:translateY(-2px); }
+
+  .hero-meta{
+    margin-top:56px; display:flex; justify-content:center; gap:56px; flex-wrap:wrap;
+    opacity:0; animation: rise .9s ease .7s forwards;
+  }
+  .hero-meta div{ text-align:center; }
+  .hero-meta .num{ font-family:var(--mono); font-size:1.4rem; color:var(--text-hi); font-weight:600; }
+  .hero-meta .lbl{ font-size:.74rem; color:var(--text-low); margin-top:4px; letter-spacing:.03em; }
+
+  /* node label chips on hero svg */
+  .node-label{
+    font-family:var(--mono); font-size:11px; fill:var(--text-low); letter-spacing:.05em;
+  }
+
+  /* ---------- section shells ---------- */
+  section{ position:relative; padding:110px 0; }
+  .section-head{ max-width:640px; margin-bottom:64px; }
+  .section-head.center{ margin-left:auto; margin-right:auto; text-align:center; }
+  .eyebrow-sm{
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--amber); margin-bottom:14px; display:block;
+  }
+  h2{
+    font-family:var(--display); font-weight:700; font-size:clamp(1.8rem, 3.4vw, 2.6rem);
+    letter-spacing:-.01em; margin-bottom:16px;
+  }
+  .section-sub{ color:var(--text-mid); font-size:1.02rem; }
+
+  .reveal{ opacity:0; transform:translateY(28px); transition:opacity .8s ease, transform .8s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+  .reveal-stagger.in > *{ opacity:1; transform:translateY(0); }
+  .reveal-stagger > *{ opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal-stagger.in > *:nth-child(1){ transition-delay:.05s; }
+  .reveal-stagger.in > *:nth-child(2){ transition-delay:.16s; }
+  .reveal-stagger.in > *:nth-child(3){ transition-delay:.27s; }
+  .reveal-stagger.in > *:nth-child(4){ transition-delay:.38s; }
+
+  /* ---------- process ---------- */
+  .process{ display:grid; grid-template-columns:repeat(3,1fr); gap:2px; background:var(--panel-border); border:1px solid var(--panel-border); border-radius:16px; overflow:hidden; }
+  .process-step{ background:var(--panel); padding:38px 32px; position:relative; transition:background .3s ease; }
+  .process-step:hover{ background:var(--panel-2); }
+  .process-num{ font-family:var(--mono); color:var(--cyan); font-size:.8rem; letter-spacing:.06em; margin-bottom:22px; display:block; }
+  .process-step h3{ font-family:var(--display); font-size:1.2rem; margin-bottom:10px; font-weight:600; }
+  .process-step p{ color:var(--text-mid); font-size:.92rem; }
+  .process-icon{ width:38px; height:38px; margin-bottom:20px; color:var(--cyan); }
+  @media (max-width:800px){ .process{ grid-template-columns:1fr; } }
+
+  /* ---------- dashboard mock ---------- */
+  .dash{
+    border:1px solid var(--panel-border); border-radius:18px; overflow:hidden;
+    background: linear-gradient(180deg, var(--panel), var(--void));
+    box-shadow: 0 40px 90px -30px rgba(0,0,0,.6);
+  }
+  .dash-top{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 22px; border-bottom:1px solid var(--panel-border);
+    font-family:var(--mono); font-size:.74rem; color:var(--text-low);
+  }
+  .dash-top .lights{ display:flex; gap:7px; }
+  .dash-top .lights i{ width:9px; height:9px; border-radius:50%; display:block; }
+  .dash-body{ display:grid; grid-template-columns:1.4fr 1fr; }
+  @media (max-width:900px){ .dash-body{ grid-template-columns:1fr; } }
+  .dash-map{ position:relative; padding:26px; border-right:1px solid var(--panel-border); min-height:380px; }
+  @media (max-width:900px){ .dash-map{ border-right:none; border-bottom:1px solid var(--panel-border); } }
+  .dash-map svg{ width:100%; height:100%; }
+  .dash-legend{ position:absolute; bottom:22px; left:26px; display:flex; gap:18px; font-family:var(--mono); font-size:.68rem; color:var(--text-low); }
+  .dash-legend span{ display:flex; align-items:center; gap:6px; }
+  .dash-legend i{ width:7px; height:7px; border-radius:50%; }
+
+  .dash-side{ padding:26px; display:flex; flex-direction:column; gap:26px; }
+  .side-block h4{ font-family:var(--mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--text-low); margin-bottom:14px; }
+  .meter{ margin-bottom:14px; }
+  .meter-top{ display:flex; justify-content:space-between; font-size:.8rem; color:var(--text-mid); margin-bottom:6px; font-family:var(--mono); }
+  .meter-track{ height:6px; border-radius:4px; background:rgba(140,158,196,.12); overflow:hidden; }
+  .meter-fill{ height:100%; border-radius:4px; width:0%; transition:width 1.4s cubic-bezier(.2,.8,.2,1); background:linear-gradient(90deg, var(--cyan), #7fe6de); }
+  .comms-log{ font-family:var(--mono); font-size:.76rem; color:var(--text-low); display:flex; flex-direction:column; gap:9px; height:150px; overflow:hidden; position:relative; }
+  .comms-log div{ opacity:0; transform:translateY(6px); animation:logIn .5s ease forwards; display:flex; gap:8px; }
+  .comms-log b{ color:var(--cyan); font-weight:500; }
+  @keyframes logIn{ to{ opacity:1; transform:translateY(0); } }
+
+  /* ---------- capabilities ---------- */
+  .cap-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:18px; }
+  @media (max-width:980px){ .cap-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:560px){ .cap-grid{ grid-template-columns:1fr; } }
+  .cap-card{
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:14px;
+    padding:28px 24px; transition: transform .3s ease, border-color .3s ease, background .3s ease;
+  }
+  .cap-card:hover{ transform:translateY(-6px); border-color:var(--cyan-dim); background:var(--panel-2); }
+  .cap-icon{ width:34px; height:34px; color:var(--cyan); margin-bottom:20px; }
+  .cap-card h3{ font-family:var(--display); font-size:1.04rem; font-weight:600; margin-bottom:8px; }
+  .cap-card p{ font-size:.88rem; color:var(--text-mid); }
+
+  /* ---------- stats ---------- */
+  .stats-strip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:2px;
+    background:var(--panel-border); border:1px solid var(--panel-border); border-radius:16px; overflow:hidden;
+  }
+  @media (max-width:800px){ .stats-strip{ grid-template-columns:repeat(2,1fr); } }
+  .stat-cell{ background:var(--panel); padding:36px 26px; text-align:center; }
+  .stat-num{ font-family:var(--mono); font-weight:600; font-size:2.1rem; color:var(--cyan); }
+  .stat-lbl{ font-size:.78rem; color:var(--text-mid); margin-top:8px; }
+
+  /* ---------- cta ---------- */
+  .cta-panel{
+    background: radial-gradient(ellipse 120% 100% at 50% 0%, rgba(76,201,192,.08), transparent 60%), var(--panel);
+    border:1px solid var(--panel-border); border-radius:22px; padding:64px 48px;
+    display:grid; grid-template-columns:1.1fr .9fr; gap:48px; align-items:center;
+  }
+  @media (max-width:860px){ .cta-panel{ grid-template-columns:1fr; padding:44px 26px; } }
+  .cta-form{ display:flex; flex-direction:column; gap:12px; }
+  .cta-form input, .cta-form select{
+    background:var(--void); border:1px solid var(--panel-border); border-radius:9px;
+    padding:13px 16px; color:var(--text-hi); font-family:var(--body); font-size:.92rem;
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .cta-form input::placeholder{ color:var(--text-low); }
+  .cta-form input:focus, .cta-form select:focus{ border-color:var(--cyan-dim); box-shadow:0 0 0 3px rgba(76,201,192,.12); outline:none; }
+  .cta-form button{ margin-top:6px; }
+  .form-note{ font-size:.76rem; color:var(--text-low); margin-top:2px; }
+
+  /* ---------- footer ---------- */
+  footer{ border-top:1px solid var(--panel-border); padding:44px 0 34px; }
+  .foot-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px; }
+  .foot-status{ font-family:var(--mono); font-size:.74rem; color:var(--text-low); display:flex; align-items:center; gap:10px; }
+  .foot-links{ display:flex; gap:26px; font-size:.82rem; color:var(--text-mid); }
+  .foot-links a:hover{ color:var(--text-hi); }
+  .foot-copy{ font-size:.76rem; color:var(--text-low); margin-top:26px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+
+<header id="header">
+  <div class="wrap">
+    <nav>
+      <div class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="12" stroke="#4cc9c0" stroke-width="1.3"/><circle cx="13" cy="6" r="2" fill="#4cc9c0"/><circle cx="6" cy="17" r="2" fill="#4cc9c0"/><circle cx="20" cy="17" r="2" fill="#4cc9c0"/><path d="M13 6L6 17M13 6L20 17M6 17H20" stroke="#4cc9c0" stroke-width="1"/></svg>
+        </span>
+        GuardianMesh <span style="color:var(--text-low); font-weight:400;">AI</span>
+      </div>
+      <div class="nav-links">
+        <a href="#process">How it responds</a>
+        <a href="#dashboard">Live ops</a>
+        <a href="#capabilities">Capabilities</a>
+        <a href="#deploy">Deploy</a>
+      </div>
+      <div class="nav-status"><span class="dot"></span> MESH OPERATIONAL</div>
+    </nav>
+  </div>
+</header>
+
+<div class="ticker-bar">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<section class="hero">
+  <div class="hero-bg">
+    <svg id="meshSvg" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice"></svg>
+  </div>
+  <div class="hero-fade"></div>
+  <div class="hero-content wrap">
+    <span class="eyebrow">Disaster &amp; emergency response network</span>
+    <h1>The network that <span class="accent">doesn't go down</span><br>when everything else does.</h1>
+    <p class="hero-sub">GuardianMesh keeps sensors, responders, and command centers talking to each other through mesh comms, even after the towers, grid, and internet fail.</p>
+    <div class="hero-actions">
+      <a href="#deploy" class="btn btn-primary">Request a deployment briefing</a>
+      <a href="#dashboard" class="btn btn-ghost">See live ops preview</a>
+    </div>
+    <div class="hero-meta">
+      <div><div class="num" id="statNodes">0</div><div class="lbl">Field nodes reporting</div></div>
+      <div><div class="num" id="statUptime">0%</div><div class="lbl">Mesh uptime, last 12 mo</div></div>
+      <div><div class="num" id="statDetect">0.0s</div><div class="lbl">Avg. detect-to-alert</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="process">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow-sm">How the mesh responds</span>
+      <h2>Three steps, running continuously</h2>
+      <p class="section-sub">This is the actual order of operations GuardianMesh runs, from the moment ground conditions change to the moment resources move.</p>
+    </div>
+    <div class="process reveal-stagger">
+      <div class="process-step">
+        <svg class="process-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+        <span class="process-num">01 — Detect</span>
+        <h3>Sensors read the ground truth</h3>
+        <p>Seismic, flood, wind, and thermal sensors on the mesh report anomalies directly to neighboring nodes, no central server required.</p>
+      </div>
+      <div class="process-step">
+        <svg class="process-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 12a8 8 0 0 1 14-5M20 12a8 8 0 0 1-14 5"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>
+        <span class="process-num">02 — Triage</span>
+        <h3>AI ranks what matters first</h3>
+        <p>The model cross-references reports against population density and known infrastructure to rank incidents by urgency in seconds.</p>
+      </div>
+      <div class="process-step">
+        <svg class="process-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 11l18-7-7 18-2-8-8-3z"/></svg>
+        <span class="process-num">03 — Coordinate</span>
+        <h3>Responders move on one shared map</h3>
+        <p>Fire, medical, and utility teams see the same live picture and routing, even across agencies that never shared a system before.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="dashboard">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <span class="eyebrow-sm">Live ops, as your team sees it</span>
+      <h2>One shared operating picture</h2>
+      <p class="section-sub">A simplified look at the console command staff monitor during an active response.</p>
+    </div>
+    <div class="dash reveal">
+      <div class="dash-top">
+        <span>OPS-CONSOLE // REGION 7 // SESSION LIVE</span>
+        <div class="lights"><i style="background:var(--red)"></i><i style="background:var(--amber)"></i><i style="background:var(--cyan)"></i></div>
+      </div>
+      <div class="dash-body">
+        <div class="dash-map">
+          <svg viewBox="0 0 500 380" id="dashMapSvg"></svg>
+          <div class="dash-legend">
+            <span><i style="background:var(--red)"></i>Critical</span>
+            <span><i style="background:var(--amber)"></i>Monitoring</span>
+            <span><i style="background:var(--cyan)"></i>Resolved</span>
+          </div>
+        </div>
+        <div class="dash-side">
+          <div class="side-block">
+            <h4>Resource allocation</h4>
+            <div class="meter">
+              <div class="meter-top"><span>Medical units</span><span>82%</span></div>
+              <div class="meter-track"><div class="meter-fill" data-w="82"></div></div>
+            </div>
+            <div class="meter">
+              <div class="meter-top"><span>Shelter capacity</span><span>64%</span></div>
+              <div class="meter-track"><div class="meter-fill" data-w="64"></div></div>
+            </div>
+            <div class="meter">
+              <div class="meter-top"><span>Water &amp; supply routes</span><span>91%</span></div>
+              <div class="meter-track"><div class="meter-fill" data-w="91"></div></div>
+            </div>
+          </div>
+          <div class="side-block">
+            <h4>Comms log</h4>
+            <div class="comms-log" id="commsLog"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="capabilities">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow-sm">Built for the worst day</span>
+      <h2>What the mesh actually does</h2>
+      <p class="section-sub">Every capability here exists because a past disaster response was slowed down without it.</p>
+    </div>
+    <div class="cap-grid reveal-stagger">
+      <div class="cap-card">
+        <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="2"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/><path d="M12 10l-6.5-3M12 10l6.5-3M12 14l-6.5 3M12 14l6.5 3"/></svg>
+        <h3>Offline mesh comms</h3>
+        <p>Nodes relay messages hop by hop across radio, satellite, and LoRa links when cell towers and internet are down.</p>
+      </div>
+      <div class="cap-card">
+        <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <h3>AI damage assessment</h3>
+        <p>Satellite and drone imagery gets scored for structural damage within minutes of a pass, no analyst queue required.</p>
+      </div>
+      <div class="cap-card">
+        <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 17l5-9 4 6 3-4 4 7"/></svg>
+        <h3>Automatic resource routing</h3>
+        <p>The system suggests the nearest available unit for every incident, factoring in road status reported by the mesh itself.</p>
+      </div>
+      <div class="cap-card">
+        <svg class="cap-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M17 20a5 5 0 0 0-10 0"/><circle cx="12" cy="9" r="4"/></svg>
+        <h3>Multi-agency sync</h3>
+        <p>Fire, EMS, utilities, and shelters work from one incident record instead of five radios and a whiteboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <span class="eyebrow-sm">Why it holds up</span>
+      <h2>Resilience, measured</h2>
+    </div>
+    <div class="stats-strip reveal-stagger">
+      <div class="stat-cell"><div class="stat-num" data-count="18400" data-suffix="+">0</div><div class="stat-lbl">Nodes deployed across active regions</div></div>
+      <div class="stat-cell"><div class="stat-num" data-count="99.98" data-suffix="%" data-decimals="2">0</div><div class="stat-lbl">Mesh uptime through grid outages</div></div>
+      <div class="stat-cell"><div class="stat-num" data-count="4.2" data-suffix="s" data-decimals="1">0</div><div class="stat-lbl">Average detect-to-alert time</div></div>
+      <div class="stat-cell"><div class="stat-num" data-count="211" data-suffix="">0</div><div class="stat-lbl">Agencies coordinated on one map</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="deploy">
+  <div class="wrap">
+    <div class="cta-panel reveal">
+      <div>
+        <span class="eyebrow-sm">Ready before the next event</span>
+        <h2>Bring GuardianMesh to your region</h2>
+        <p class="section-sub">Tell us where you operate and we'll walk your team through a deployment plan built around your existing infrastructure.</p>
+      </div>
+      <form class="cta-form" onsubmit="event.preventDefault(); handleDeploySubmit(this);">
+        <input type="text" placeholder="Full name" required>
+        <input type="text" placeholder="Agency or organization" required>
+        <select required>
+          <option value="" disabled selected>Region type</option>
+          <option>Coastal / hurricane zone</option>
+          <option>Seismic zone</option>
+          <option>Wildfire zone</option>
+          <option>Flood plain</option>
+          <option>Other</option>
+        </select>
+        <input type="email" placeholder="Work email" required>
+        <button type="submit" class="btn btn-primary">Request briefing</button>
+        <p class="form-note" id="formNote">We respond within one business day. No commitment required.</p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <div class="foot-status"><span class="dot"></span> All mesh regions operational — last sync <span id="lastSync">just now</span></div>
+      <div class="foot-links">
+        <a href="#process">How it responds</a>
+        <a href="#dashboard">Live ops</a>
+        <a href="#capabilities">Capabilities</a>
+        <a href="#deploy">Deploy</a>
+      </div>
+    </div>
+    <p class="foot-copy">GuardianMesh AI — built for emergency operations, not everyday traffic.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- header scroll state ---------- */
+  const header = document.getElementById('header');
+  window.addEventListener('scroll', () => {
+    header.classList.toggle('scrolled', window.scrollY > 40);
+  }, { passive:true });
+
+  /* ---------- ticker content ---------- */
+  const alerts = [
+    ['12:04:02','<b>ADVISORY</b> Flood sensors reporting rising levels — Sector 4'],
+    ['12:04:18','<b>RESOLVED</b> Relay node R-19 back online after failover'],
+    ['12:05:41','<b>DISPATCH</b> Medical unit routed to Sector 7, ETA 6 min'],
+    ['12:06:09','<b>MESH</b> 3 nodes rerouted around damaged tower — no data loss'],
+    ['12:07:22','<b>SHELTER</b> Capacity update received from Site B'],
+  ];
+  const track = document.getElementById('tickerTrack');
+  function buildTicker(){
+    const items = alerts.concat(alerts).map(a => `<span><i style="color:var(--text-low)">${a[0]}</i> ${a[1]}</span>`).join('');
+    track.innerHTML = items;
+  }
+  buildTicker();
+
+  /* ---------- scroll reveals ---------- */
+  const revealEls = document.querySelectorAll('.reveal, .reveal-stagger');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold:0.15 });
+  revealEls.forEach(el => io.observe(el));
+
+  /* ---------- meter fills on reveal ---------- */
+  const dashSection = document.getElementById('dashboard');
+  const meterIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        document.querySelectorAll('.meter-fill').forEach(m => m.style.width = m.dataset.w + '%');
+        meterIO.disconnect();
+      }
+    });
+  }, { threshold:0.3 });
+  meterIO.observe(dashSection);
+
+  /* ---------- count-up stats ---------- */
+  function countUp(el){
+    const target = parseFloat(el.dataset.count);
+    const decimals = parseInt(el.dataset.decimals || '0');
+    const suffix = el.dataset.suffix || '';
+    const dur = 1600;
+    const start = performance.now();
+    function step(now){
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = target * eased;
+      el.textContent = (decimals ? val.toFixed(decimals) : Math.floor(val).toLocaleString()) + suffix;
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  const statEls = document.querySelectorAll('[data-count]');
+  const statIO = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ countUp(e.target); statIO.unobserve(e.target); }
+    });
+  }, { threshold:0.4 });
+  statEls.forEach(el => statIO.observe(el));
+
+  /* hero meta counters, run once on load */
+  function countUpSimple(id, target, suffix, decimals, dur){
+    const el = document.getElementById(id);
+    const start = performance.now();
+    function step(now){
+      const p = Math.min((now - start) / dur, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = target * eased;
+      el.textContent = (decimals ? val.toFixed(decimals) : Math.floor(val).toLocaleString()) + suffix;
+      if(p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      countUpSimple('statNodes', 18400, '+', 0, 1500);
+      countUpSimple('statUptime', 99.98, '%', 2, 1500);
+      countUpSimple('statDetect', 4.2, 's', 1, 1500);
+    }, 500);
+  });
+
+  /* ---------- comms log cycling ---------- */
+  const logMessages = [
+    ['NODE-14','Signal restored, rejoining mesh'],
+    ['DISPATCH','Unit 6 en route to Sector 7'],
+    ['SENSOR-R2','Water level +0.4m in last 10 min'],
+    ['RELAY-08','Rerouted traffic around NODE-03'],
+    ['SHELTER-B','Capacity updated: 340 / 500'],
+    ['DRONE-2','Imagery pass complete, Sector 4'],
+    ['NODE-22','Battery at 61%, solar charging'],
+    ['COMMAND','Priority reassigned: Sector 7 → critical'],
+  ];
+  const logEl = document.getElementById('commsLog');
+  let logIdx = 0;
+  function pushLog(){
+    const [tag, msg] = logMessages[logIdx % logMessages.length];
+    logIdx++;
+    const line = document.createElement('div');
+    line.innerHTML = `<b>${tag}</b><span>${msg}</span>`;
+    logEl.appendChild(line);
+    while(logEl.children.length > 5) logEl.removeChild(logEl.firstChild);
+  }
+  pushLog(); pushLog(); pushLog();
+  if(!reduced) setInterval(pushLog, 2600);
+
+  /* ---------- last sync footer ---------- */
+  const lastSync = document.getElementById('lastSync');
+  let secs = 0;
+  if(!reduced){
+    setInterval(() => {
+      secs += 4;
+      lastSync.textContent = secs < 60 ? secs + 's ago' : Math.floor(secs/60) + 'm ago';
+    }, 4000);
+  }
+
+  /* ---------- form ---------- */
+  window.handleDeploySubmit = function(form){
+    const note = document.getElementById('formNote');
+    note.textContent = 'Request received — a GuardianMesh deployment lead will follow up shortly.';
+    note.style.color = 'var(--cyan)';
+    form.querySelectorAll('input,select,button').forEach(el => el.disabled = true);
+  };
+
+  /* ================= MESH NETWORK HERO ================= */
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const meshSvg = document.getElementById('meshSvg');
+
+  const nodes = [
+    { id:'hub', x:500, y:300, r:9, role:'HUB', label:'COMMAND', hub:true },
+    { id:'n1',  x:250, y:150, r:6, role:'FIELD' },
+    { id:'n2',  x:500, y:95,  r:6, role:'RELAY', label:'RELAY' },
+    { id:'n3',  x:750, y:150, r:6, role:'FIELD' },
+    { id:'n4',  x:150, y:300, r:6, role:'SENSOR', label:'SENSOR' },
+    { id:'n5',  x:850, y:300, r:6, role:'FIELD' },
+    { id:'n6',  x:250, y:450, r:6, role:'FIELD' },
+    { id:'n7',  x:500, y:520, r:6, role:'RELAY' },
+    { id:'n8',  x:750, y:450, r:6, role:'FIELD' },
+  ];
+
+  // spokes connect hub to each outer node; ring connects outer nodes to each other
+  const spokes = ['n1','n2','n3','n4','n5','n6','n7','n8'].map(id => ['hub', id]);
+  const ring = [['n1','n2'],['n2','n3'],['n3','n5'],['n5','n8'],['n8','n7'],['n7','n6'],['n6','n4'],['n4','n1']];
+
+  const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
+
+  function makeLine(a, b, cls){
+    const el = document.createElementNS(svgNS, 'line');
+    const na = nodeById[a], nb = nodeById[b];
+    el.setAttribute('x1', na.x); el.setAttribute('y1', na.y);
+    el.setAttribute('x2', nb.x); el.setAttribute('y2', nb.y);
+    el.setAttribute('class', cls);
+    el.setAttribute('stroke', 'var(--cyan)');
+    el.setAttribute('stroke-width', '1');
+    el.setAttribute('opacity', '0.22');
+    return el;
+  }
+
+  const linesGroup = document.createElementNS(svgNS, 'g');
+  const spokeLines = spokes.map(([a,b]) => { const l = makeLine(a,b,'spoke'); linesGroup.appendChild(l); return { a,b,el:l }; });
+  const ringLines = ring.map(([a,b]) => { const l = makeLine(a,b,'ring'); linesGroup.appendChild(l); return { a,b,el:l }; });
+  meshSvg.appendChild(linesGroup);
+
+  // traveling pulse dots along ring edges (ambient data flow)
+  const pulseGroup = document.createElementNS(svgNS, 'g');
+  meshSvg.appendChild(pulseGroup);
+  const pulses = ring.map((pair, i) => {
+    const c = document.createElementNS(svgNS,'circle');
+    c.setAttribute('r','2.4');
+    c.setAttribute('fill','var(--cyan)');
+    c.setAttribute('opacity','0.9');
+    pulseGroup.appendChild(c);
+    return { pair, el:c, offset: i / ring.length, speed: 0.00016 };
+  });
+
+  // nodes
+  const nodeGroup = document.createElementNS(svgNS, 'g');
+  meshSvg.appendChild(nodeGroup);
+  nodes.forEach(n => {
+    const g = document.createElementNS(svgNS, 'g');
+    g.setAttribute('data-id', n.id);
+
+    const ring = document.createElementNS(svgNS, 'circle');
+    ring.setAttribute('cx', n.x); ring.setAttribute('cy', n.y);
+    ring.setAttribute('r', n.r + 7);
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', n.hub ? 'var(--cyan)' : 'var(--cyan)');
+    ring.setAttribute('stroke-width', '1');
+    ring.setAttribute('opacity', '0.18');
+    ring.setAttribute('class', 'ping');
+    g.appendChild(ring);
+
+    const dot = document.createElementNS(svgNS, 'circle');
+    dot.setAttribute('cx', n.x); dot.setAttribute('cy', n.y);
+    dot.setAttribute('r', n.r);
+    dot.setAttribute('fill', n.hub ? 'var(--cyan)' : '#0f1a2b');
+    dot.setAttribute('stroke', 'var(--cyan)');
+    dot.setAttribute('stroke-width', n.hub ? 0 : 1.4);
+    dot.setAttribute('class', 'core');
+    g.appendChild(dot);
+
+    if(n.label){
+      const t = document.createElementNS(svgNS, 'text');
+      t.setAttribute('x', n.x + n.r + 10);
+      t.setAttribute('y', n.y + 4);
+      t.setAttribute('class', 'node-label');
+      t.textContent = n.label;
+      g.appendChild(t);
+    }
+    n._el = g; n._dot = dot; n._ring = ring;
+    nodeGroup.appendChild(g);
+  });
+
+  // ambient ping animation (CSS-driven via JS toggling, kept simple with rAF pulse)
+  let t0 = performance.now();
+  function animatePulses(now){
+    const dt = now - t0;
+    pulses.forEach(p => {
+      const na = nodeById[p.pair[0]], nb = nodeById[p.pair[1]];
+      const prog = ((dt * p.speed) + p.offset) % 1;
+      const x = na.x + (nb.x - na.x) * prog;
+      const y = na.y + (nb.y - na.y) * prog;
+      p.el.setAttribute('cx', x);
+      p.el.setAttribute('cy', y);
+    });
+    if(!reduced) requestAnimationFrame(animatePulses);
+  }
+  requestAnimationFrame(animatePulses);
+
+  // gentle ambient node ring pulse via CSS keyframe injected per node with stagger
+  nodes.forEach((n, i) => {
+    n._ring.style.animation = `hero-ping 3.4s ease-out ${(i * 0.35).toFixed(2)}s infinite`;
+  });
+  const styleTag = document.createElement('style');
+  styleTag.textContent = `
+    @keyframes hero-ping{
+      0%{ opacity:.35; r:${9}; }
+      70%{ opacity:0; }
+      100%{ opacity:0; }
+    }
+  `;
+  document.head.appendChild(styleTag);
+  nodes.forEach(n => {
+    n._ring.animate(
+      [ { opacity:0.4, r:(n.r+4) }, { opacity:0, r:(n.r+22) } ],
+      { duration:3400, delay:Math.random()*3000, iterations: reduced ? 1 : Infinity }
+    );
+  });
+
+  /* ---------- hub failure / reroute simulation ---------- */
+  function setEdgeState(lineObjs, opacity, color, width){
+    lineObjs.forEach(({el}) => {
+      el.setAttribute('opacity', opacity);
+      el.setAttribute('stroke', color);
+      el.setAttribute('stroke-width', width);
+    });
+  }
+  function setHubState(active){
+    const hub = nodeById.hub;
+    if(active){
+      hub._dot.setAttribute('fill', 'var(--cyan)');
+      hub._dot.setAttribute('stroke-width', 0);
+    } else {
+      hub._dot.setAttribute('fill', '#241417');
+      hub._dot.setAttribute('stroke', 'var(--red)');
+      hub._dot.setAttribute('stroke-width', 1.6);
+    }
+  }
+
+  let cycleRunning = false;
+  function runFailoverCycle(){
+    if(reduced || cycleRunning) return;
+    cycleRunning = true;
+    // step 1: hub online, ring dim (normal state) -- already default
+
+    // step 2: hub fails
+    setTimeout(() => {
+      setHubState(false);
+      setEdgeState(spokeLines, 0.05, 'var(--red)', 1);
+      setEdgeState(ringLines, 0.75, 'var(--cyan)', 1.8);
+    }, 3200);
+
+    // step 3: recovery
+    setTimeout(() => {
+      setHubState(true);
+      setEdgeState(spokeLines, 0.22, 'var(--cyan)', 1);
+      setEdgeState(ringLines, 0.22, 'var(--cyan)', 1);
+      cycleRunning = false;
+    }, 8200);
+  }
+  runFailoverCycle();
+  if(!reduced) setInterval(runFailoverCycle, 11000);
+
+  /* ---------- dashboard map incidents ---------- */
+  const dashMap = document.getElementById('dashMapSvg');
+  const incidents = [
+    { x:110, y:90, s:'critical' },
+    { x:260, y:150, s:'monitoring' },
+    { x:380, y:80, s:'resolved' },
+    { x:180, y:260, s:'monitoring' },
+    { x:340, y:290, s:'critical' },
+    { x:420, y:200, s:'resolved' },
+  ];
+  const colorFor = { critical:'var(--red)', monitoring:'var(--amber)', resolved:'var(--cyan)' };
+
+  // faint grid + connecting lines to suggest a map/mesh, then incident pins
+  for(let gx = 0; gx <= 500; gx += 50){
+    const l = document.createElementNS(svgNS,'line');
+    l.setAttribute('x1',gx); l.setAttribute('y1',0); l.setAttribute('x2',gx); l.setAttribute('y2',380);
+    l.setAttribute('stroke','rgba(140,158,196,0.08)'); l.setAttribute('stroke-width','1');
+    dashMap.appendChild(l);
+  }
+  for(let gy = 0; gy <= 380; gy += 50){
+    const l = document.createElementNS(svgNS,'line');
+    l.setAttribute('x1',0); l.setAttribute('y1',gy); l.setAttribute('x2',500); l.setAttribute('y2',gy);
+    l.setAttribute('stroke','rgba(140,158,196,0.08)'); l.setAttribute('stroke-width','1');
+    dashMap.appendChild(l);
+  }
+
+  incidents.forEach((inc, i) => {
+    const c = document.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', inc.x); c.setAttribute('cy', inc.y); c.setAttribute('r', 6);
+    c.setAttribute('fill', colorFor[inc.s]);
+    dashMap.appendChild(c);
+
+    const ring = document.createElementNS(svgNS, 'circle');
+    ring.setAttribute('cx', inc.x); ring.setAttribute('cy', inc.y); ring.setAttribute('r', 6);
+    ring.setAttribute('fill', 'none');
+    ring.setAttribute('stroke', colorFor[inc.s]);
+    ring.setAttribute('stroke-width', 1.4);
+    dashMap.appendChild(ring);
+    if(!reduced){
+      ring.animate(
+        [ { opacity:0.7, r:6 }, { opacity:0, r:22 } ],
+        { duration: 2400, delay: i * 260, iterations: Infinity }
+      );
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
