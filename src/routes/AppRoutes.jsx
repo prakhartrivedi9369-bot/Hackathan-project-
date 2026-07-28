@@ -1,3 +1,4 @@
+// src/routes/AppRoutes.jsx
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -10,7 +11,7 @@ import IncidentDetail from "../pages/IncidentDetail";
 import Teams from "../pages/Teams";
 import Resources from "../pages/Resources";
 import Reports from "../pages/Reports";
-import AllInsights from "../pages/AllInsights";
+import AllInsights from "../pages/AIInsights";
 import Settings from "../pages/Settings";
 import NotFound from "../pages/NotFound";
 
