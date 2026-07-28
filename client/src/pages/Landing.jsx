@@ -33,6 +33,7 @@ import {
   WiThermometer,
 } from "react-icons/wi";
 import { FaBuildingShield, FaHandsHolding, FaHospital, FaPeopleGroup } from "react-icons/fa6";
+import GuardianMap from "../components/Map/GuardianMap";
 
 /* -------------------------------------------------------------------------- */
 /*  DESIGN NOTES (dev reference — remove or keep as comment)                  */
@@ -657,14 +658,22 @@ function DisasterTypes() {
 }
 
 /* ------------------------------- LiveMapPreview ----------------------------- */
+// Sample mesh data for the landing-page preview. On the real dashboards this
+// same shape of data comes from the incidents/resources APIs instead of a
+// hardcoded array — the GuardianMap component itself doesn't change either way.
+const PREVIEW_SAFE_ZONES = [
+  { id: "safe-1", position: [28.6304, 77.2177], label: "Riverside Community Hall", description: "Shelter · Zone 4" },
+  { id: "safe-2", position: [28.6139, 77.2295], label: "Hillcrest Public School", description: "Shelter · Zone 2" },
+  { id: "safe-3", position: [28.5988, 77.1934], label: "Central Supply Depot", description: "Supplies · Zone 9" },
+];
+
+const PREVIEW_DANGER_ZONES = [
+  { id: "danger-1", position: [28.6448, 77.2167], label: "Flood Risk — Zone 4", description: "Rising water levels, evacuation advised" },
+  { id: "danger-2", position: [28.6023, 77.2412], label: "Fire — Industrial Park", description: "Zone 7, active response underway" },
+  { id: "danger-3", position: [28.5921, 77.2100], label: "Landslide — Hillcrest", description: "Zone 2, road access blocked" },
+];
+
 function LiveMapPreview() {
-  const pins = [
-    { top: "30%", left: "20%", type: "danger" },
-    { top: "55%", left: "45%", type: "safe" },
-    { top: "25%", left: "70%", type: "danger" },
-    { top: "70%", left: "65%", type: "safe" },
-    { top: "45%", left: "82%", type: "danger" },
-  ];
   return (
     <section className="bg-white dark:bg-[#1E293B] py-28">
       <div className="mx-auto max-w-7xl px-6 lg:px-10">
@@ -678,38 +687,16 @@ function LiveMapPreview() {
         </Reveal>
 
         <Reveal>
-          <div className="relative h-[420px] w-full overflow-hidden rounded-3xl border border-slate-200 dark:border-[#334155] bg-[#0F172A] shadow-2xl shadow-blue-900/10">
-            <MeshField density={40} className="opacity-30" />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent" />
-            {pins.map((p, i) => (
-              <span
-                key={i}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
-                style={{ top: p.top, left: p.left }}
-              >
-                <span
-                  className={`grid h-7 w-7 place-items-center rounded-full text-white shadow-lg ${
-                    p.type === "danger" ? "bg-[#DC2626]" : "bg-[#16A34A]"
-                  }`}
-                >
-                  <FiMapPin className="h-3.5 w-3.5" />
-                </span>
-                <span
-                  className={`absolute inset-0 -z-10 animate-ping rounded-full ${
-                    p.type === "danger" ? "bg-[#DC2626]/50" : "bg-[#16A34A]/50"
-                  }`}
-                />
-              </span>
-            ))}
-            <div className="absolute bottom-6 left-6 flex items-center gap-5 rounded-xl bg-white/10 px-4 py-2.5 backdrop-blur-md">
-              <span className="flex items-center gap-2 font-[Inter] text-[12.5px] text-white">
-                <span className="h-2 w-2 rounded-full bg-[#DC2626]" /> Danger Zone
-              </span>
-              <span className="flex items-center gap-2 font-[Inter] text-[12.5px] text-white">
-                <span className="h-2 w-2 rounded-full bg-[#16A34A]" /> Safe Zone
-              </span>
-            </div>
-          </div>
+          <GuardianMap
+            height="420px"
+            className="shadow-2xl shadow-blue-900/10"
+            center={[28.6139, 77.209]}
+            zoom={11}
+            userLocation={{ position: [28.6139, 77.209], label: "You" }}
+            safeZones={PREVIEW_SAFE_ZONES}
+            dangerZones={PREVIEW_DANGER_ZONES}
+            scrollWheelZoom={false}
+          />
         </Reveal>
       </div>
     </section>
