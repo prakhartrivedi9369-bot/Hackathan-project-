@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, useInView, AnimatePresence } from "framer-motion";
+import { motion, useInView, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   FiMenu,
   FiX,
@@ -194,6 +194,20 @@ function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Lock body scroll and allow Escape to dismiss the mobile menu — keeps
+  // keyboard and touch users from getting stuck behind the overlay.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKeyDown);
+    const { overflow } = document.body.style;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = overflow;
+    };
+  }, [open]);
+
   return (
     <header
       className={`fixed top-0 z-50 w-full transition-all duration-500 ${
@@ -206,7 +220,7 @@ function Navbar() {
         <a href="#home" className="flex items-center gap-2.5 group">
           <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-[#2563EB] transition-all duration-300 group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-blue-500/30">
             <HiOutlineShieldCheck className="h-4.5 w-4.5 text-white" />
-            <span className="absolute -right-1 -top-1 h-2 w-2 animate-pulse rounded-full bg-[#DC2626]" />
+            <span className="absolute -right-1 -top-1 h-2 w-2 animate-pulse motion-reduce:animate-none rounded-full bg-[#DC2626]" />
           </span>
           <span className="font-[Sora] text-[17px] font-semibold tracking-tight text-[#0F172A] dark:text-white">
             Guardian<span className="text-[#2563EB]">Mesh</span>
@@ -218,7 +232,7 @@ function Navbar() {
             <a
               key={link.label}
               href={link.href}
-              className="group relative font-[Inter] text-[14.5px] font-medium text-[#334155] dark:text-slate-300 transition-colors hover:text-[#0F172A] dark:hover:text-white"
+              className="group relative rounded-sm font-[Inter] text-[14.5px] font-medium text-[#334155] dark:text-slate-300 transition-colors hover:text-[#0F172A] dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0F172A]"
             >
               {link.label}
               <span className="absolute -bottom-1.5 left-0 h-[1.5px] w-0 bg-[#2563EB] transition-all duration-300 group-hover:w-full" />
@@ -231,7 +245,8 @@ function Navbar() {
             type="button"
             onClick={toggleTheme}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="relative grid h-9 w-9 place-items-center rounded-full text-[#334155] dark:text-slate-300 transition-colors hover:bg-slate-100 dark:hover:bg-white/10"
+            aria-pressed={isDark}
+            className="relative grid h-9 w-9 place-items-center rounded-full text-[#334155] dark:text-slate-300 transition-colors hover:bg-slate-100 dark:hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0F172A]"
           >
             <AnimatePresence mode="wait" initial={false}>
               <motion.span
@@ -248,13 +263,13 @@ function Navbar() {
           </button>
           <Link
             to="/login"
-            className="font-[Inter] text-[14.5px] font-medium text-[#334155] dark:text-slate-300 transition-colors hover:text-[#0F172A] dark:hover:text-white"
+            className="rounded-sm font-[Inter] text-[14.5px] font-medium text-[#334155] dark:text-slate-300 transition-colors hover:text-[#0F172A] dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0F172A]"
           >
             Log in
           </Link>
           <Link
             to="/signup"
-            className="group flex items-center gap-1.5 rounded-full bg-[#0F172A] px-5 py-2.5 font-[Inter] text-[14px] font-medium text-white transition-all duration-300 hover:bg-[#2563EB] hover:shadow-lg hover:shadow-blue-500/25"
+            className="group flex items-center gap-1.5 rounded-full bg-[#0F172A] px-5 py-2.5 font-[Inter] text-[14px] font-medium text-white transition-all duration-300 hover:bg-[#2563EB] hover:shadow-lg hover:shadow-blue-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-[#0F172A]"
           >
             Get Started
             <FiArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
@@ -266,14 +281,19 @@ function Navbar() {
             type="button"
             onClick={toggleTheme}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            className="grid h-9 w-9 place-items-center rounded-lg text-[#0F172A] dark:text-white"
+            aria-pressed={isDark}
+            className="grid h-9 w-9 place-items-center rounded-lg text-[#0F172A] dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
           >
             {isDark ? <HiOutlineSun className="h-5 w-5" /> : <HiOutlineMoon className="h-5 w-5" />}
           </button>
           <button
+            type="button"
             onClick={() => setOpen(true)}
-            className="grid h-9 w-9 place-items-center rounded-lg text-[#0F172A] dark:text-white"
+            className="grid h-9 w-9 place-items-center rounded-lg text-[#0F172A] dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
             aria-label="Open menu"
+            aria-haspopup="true"
+            aria-expanded={open}
+            aria-controls="mobile-menu"
           >
             <FiMenu className="h-5.5 w-5.5" />
           </button>
@@ -290,6 +310,10 @@ function Navbar() {
             onClick={() => setOpen(false)}
           >
             <motion.div
+              id="mobile-menu"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Site menu"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -299,7 +323,12 @@ function Navbar() {
             >
               <div className="flex items-center justify-between">
                 <span className="font-[Sora] text-lg font-semibold text-[#0F172A] dark:text-white">Menu</span>
-                <button onClick={() => setOpen(false)} aria-label="Close menu">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close menu"
+                  className="rounded-lg p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+                >
                   <FiX className="h-5.5 w-5.5 text-[#0F172A] dark:text-white" />
                 </button>
               </div>
@@ -309,7 +338,7 @@ function Navbar() {
                     key={link.label}
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="font-[Inter] text-base font-medium text-[#334155] dark:text-slate-300"
+                    className="rounded-sm font-[Inter] text-base font-medium text-[#334155] dark:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
                   >
                     {link.label}
                   </a>
@@ -318,13 +347,13 @@ function Navbar() {
               <div className="mt-auto flex flex-col gap-3">
                 <Link
                   to="/login"
-                  className="rounded-full border border-slate-200 dark:border-[#334155] py-3 text-center font-[Inter] text-sm font-medium text-[#0F172A] dark:text-white"
+                  className="rounded-full border border-slate-200 dark:border-[#334155] py-3 text-center font-[Inter] text-sm font-medium text-[#0F172A] dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
                 >
                   Log in
                 </Link>
                 <Link
                   to="/signup"
-                  className="rounded-full bg-[#2563EB] py-3 text-center font-[Inter] text-sm font-medium text-white"
+                  className="rounded-full bg-[#2563EB] py-3 text-center font-[Inter] text-sm font-medium text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
                 >
                   Get Started
                 </Link>
@@ -348,7 +377,7 @@ function Hero() {
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 lg:grid-cols-2 lg:gap-10 lg:px-10">
         <Reveal className="relative z-10">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#2563EB]/20 bg-[#2563EB]/5 px-4 py-1.5 font-[JetBrains_Mono] text-[12px] font-medium text-[#2563EB]">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#2563EB]" />
+            <span className="h-1.5 w-1.5 animate-pulse motion-reduce:animate-none rounded-full bg-[#2563EB]" />
             LIVE MESH · 3,214 SENSORS ONLINE
           </span>
 
@@ -367,12 +396,16 @@ function Hero() {
           <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:items-center">
             <Link
               to="/signup"
-              className="group flex items-center justify-center gap-2 rounded-full bg-[#2563EB] px-7 py-3.5 font-[Inter] text-[15px] font-semibold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/30"
+              className="group flex items-center justify-center gap-2 rounded-full bg-[#2563EB] px-7 py-3.5 font-[Inter] text-[15px] font-semibold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
             >
               Get Started
               <FiArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
-            <button className="group flex items-center justify-center gap-2.5 rounded-full border border-slate-300 bg-white dark:bg-[#1E293B] px-7 py-3.5 font-[Inter] text-[15px] font-semibold text-[#0F172A] dark:text-white transition-all duration-300 hover:border-[#2563EB] hover:text-[#2563EB]">
+            <button
+              type="button"
+              aria-label="Watch product demo video"
+              className="group flex items-center justify-center gap-2.5 rounded-full border border-slate-300 bg-white dark:bg-[#1E293B] px-7 py-3.5 font-[Inter] text-[15px] font-semibold text-[#0F172A] dark:text-white transition-all duration-300 hover:border-[#2563EB] hover:text-[#2563EB] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
+            >
               <span className="grid h-7 w-7 place-items-center rounded-full bg-[#0F172A] text-white transition-colors group-hover:bg-[#2563EB]">
                 <FiPlay className="h-3 w-3" />
               </span>
@@ -417,7 +450,7 @@ function Hero() {
                   style={pos}
                 >
                   <FiMapPin className="h-3 w-3" />
-                  <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-[#DC2626]/50" />
+                  <span className="absolute inset-0 -z-10 animate-ping motion-reduce:animate-none rounded-full bg-[#DC2626]/50" />
                 </span>
               ))}
             </div>
@@ -565,7 +598,7 @@ function Features() {
       <div className="relative mx-auto max-w-7xl px-6 lg:px-10">
         <Reveal className="mx-auto mb-16 max-w-2xl text-center">
           <span className="inline-flex items-center gap-2 font-[JetBrains_Mono] text-[12px] font-medium tracking-wider text-[#2563EB]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] animate-pulse" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] animate-pulse motion-reduce:animate-none" />
             CAPABILITIES
           </span>
           <h2 className="mt-4 font-[Sora] text-3xl font-bold text-[#0F172A] dark:text-white sm:text-4xl">
@@ -673,7 +706,7 @@ function HowItWorks() {
       <div className="relative mx-auto max-w-6xl px-6 lg:px-10">
         <Reveal className="mx-auto mb-16 max-w-2xl text-center">
           <span className="inline-flex items-center gap-2 font-[JetBrains_Mono] text-[12px] font-medium tracking-wider text-[#2563EB]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] animate-pulse" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] animate-pulse motion-reduce:animate-none" />
             THE PIPELINE
           </span>
           <h2 className="mt-4 font-[Sora] text-3xl font-bold text-[#0F172A] dark:text-white sm:text-4xl">
@@ -955,7 +988,7 @@ function LiveMapPreview() {
       <div className="relative mx-auto max-w-7xl px-6 lg:px-10">
         <Reveal className="mx-auto mb-14 max-w-2xl text-center">
           <span className="inline-flex items-center gap-2 font-[JetBrains_Mono] text-[12px] font-medium tracking-wider text-[#2563EB]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] animate-pulse" />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] animate-pulse motion-reduce:animate-none" />
             SITUATIONAL AWARENESS
           </span>
           <h2 className="mt-4 font-[Sora] text-3xl font-bold text-[#0F172A] dark:text-white sm:text-4xl">
@@ -974,7 +1007,7 @@ function LiveMapPreview() {
                   key={badge.label}
                   className="flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md px-3 py-1.5 text-[11px] font-medium text-white shadow-lg ring-1 ring-white/10"
                 >
-                  <span className="h-1.5 w-1.5 rounded-full animate-pulse" style={{ background: badge.color }} />
+                  <span className="h-1.5 w-1.5 rounded-full animate-pulse motion-reduce:animate-none" style={{ background: badge.color }} />
                   {badge.label}
                 </span>
               ))}
@@ -1056,11 +1089,11 @@ function WhyGuardianMesh() {
           <div className="relative mx-auto h-[420px] w-full max-w-lg overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F172A] to-[#1E293B] shadow-2xl shadow-[#2563EB]/20 ring-1 ring-[#2563EB]/20">
             <MeshField density={35} className="opacity-60" />
             
-            <div className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#2563EB]/20 blur-3xl animate-pulse" />
+            <div className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#2563EB]/20 blur-3xl animate-pulse motion-reduce:animate-none" />
             
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <div className="relative">
-                <div className="absolute inset-0 animate-ping rounded-full bg-[#2563EB]/30" />
+                <div className="absolute inset-0 animate-ping motion-reduce:animate-none rounded-full bg-[#2563EB]/30" />
                 <span className="relative grid h-24 w-24 place-items-center rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#60A5FA] shadow-lg shadow-[#2563EB]/50">
                   <HiOutlineShieldCheck className="h-12 w-12 text-white" />
                 </span>
@@ -1133,7 +1166,7 @@ function WhyGuardianMesh() {
 
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-black/60 backdrop-blur-md px-5 py-2.5 ring-1 ring-white/10">
               <span className="flex items-center gap-2 font-[JetBrains_Mono] text-[11px] font-medium text-white">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A] animate-pulse" />
+                <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A] animate-pulse motion-reduce:animate-none" />
                 AI Network · 3,214 Sensors Online
               </span>
             </div>
@@ -1228,8 +1261,12 @@ function Testimonials() {
     },
   ];
 
-  // Duplicate for infinite scroll effect
+  // Duplicate for infinite scroll effect — only the first set is announced
+  // to screen readers, the other two copies exist purely for the visual loop.
   const extendedTestimonials = [...testimonials, ...testimonials, ...testimonials];
+  const shouldReduceMotion = useReducedMotion();
+  const [isPaused, setIsPaused] = useState(false);
+  const isPlaying = !shouldReduceMotion && !isPaused;
 
   return (
     <section className="relative overflow-hidden bg-white dark:bg-[#1E293B] py-28">
@@ -1249,13 +1286,18 @@ function Testimonials() {
           </p>
         </Reveal>
 
-        {/* Auto-scrolling carousel */}
-        <div className="relative overflow-hidden">
+        {/* Auto-scrolling carousel — pauses on hover, keyboard focus, or when
+            the visitor prefers reduced motion */}
+        <div
+          className="relative overflow-hidden"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onFocus={() => setIsPaused(true)}
+          onBlur={() => setIsPaused(false)}
+        >
           <motion.div
             className="flex gap-6"
-            animate={{
-              x: ["0%", "-33.33%"],
-            }}
+            animate={isPlaying ? { x: ["0%", "-33.33%"] } : undefined}
             transition={{
               duration: 30,
               ease: "linear",
@@ -1265,6 +1307,7 @@ function Testimonials() {
             {extendedTestimonials.map((t, i) => (
               <div
                 key={`${t.name}-${i}`}
+                aria-hidden={i >= testimonials.length}
                 className="min-w-[280px] max-w-[320px] flex-1 md:min-w-[320px] lg:min-w-[360px]"
               >
                 <motion.div
@@ -1279,7 +1322,11 @@ function Testimonials() {
                   <div className="flex items-center gap-4">
                     <img
                       src={t.image}
-                      alt={t.name}
+                      alt=""
+                      width={56}
+                      height={56}
+                      loading="lazy"
+                      decoding="async"
                       className="h-14 w-14 rounded-2xl object-cover ring-2 ring-[#2563EB]/20 transition-all duration-300 group-hover:ring-[#2563EB]/40"
                     />
                     <div className="flex-1 min-w-0">
@@ -1328,7 +1375,7 @@ function Testimonials() {
 
         {/* Pause hint */}
         <p className="mt-6 text-center font-[Inter] text-[12px] text-[#94A3B8] dark:text-slate-500">
-          Hover to pause · Scroll to explore
+          Hover or tab through to pause · Scroll to explore
         </p>
       </div>
     </section>
@@ -1395,8 +1442,12 @@ function FAQ() {
                   }`}
                 >
                   <button
+                    type="button"
                     onClick={() => setOpen(isOpen ? null : i)}
-                    className="flex w-full items-center gap-4 px-6 py-5 text-left transition-all duration-300"
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-panel-${i}`}
+                    id={`faq-trigger-${i}`}
+                    className="flex w-full items-center gap-4 rounded-3xl px-6 py-5 text-left transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
                   >
                     <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl transition-all duration-500 ${
                       isOpen
@@ -1422,6 +1473,9 @@ function FAQ() {
                   <AnimatePresence initial={false}>
                     {isOpen && (
                       <motion.div
+                        id={`faq-panel-${i}`}
+                        role="region"
+                        aria-labelledby={`faq-trigger-${i}`}
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
@@ -1448,7 +1502,7 @@ function FAQ() {
           </p>
           <a
             href="#contact"
-            className="mt-3 inline-flex items-center gap-2 font-[Inter] text-[14px] font-medium text-[#2563EB] transition-all hover:gap-3 hover:underline"
+            className="mt-3 inline-flex items-center gap-2 rounded-sm font-[Inter] text-[14px] font-medium text-[#2563EB] transition-all hover:gap-3 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2"
           >
             Contact our team
             <FiArrowRight className="h-4 w-4" />
@@ -1474,7 +1528,7 @@ function FinalCTA() {
         </p>
         <Link
           to="/signup"
-          className="group mt-8 inline-flex items-center gap-2 rounded-full bg-white dark:bg-[#1E293B] px-8 py-3.5 font-[Inter] text-[15px] font-semibold text-[#0F172A] dark:text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-white/10"
+          className="group mt-8 inline-flex items-center gap-2 rounded-full bg-white dark:bg-[#1E293B] px-8 py-3.5 font-[Inter] text-[15px] font-semibold text-[#0F172A] dark:text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0F172A]"
         >
           Join Now
           <FiArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -1489,12 +1543,15 @@ function FinalCTA() {
 function Footer() {
   const { isDark } = useTheme();
   const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle newsletter signup
     console.log("Newsletter signup:", email);
     setEmail("");
+    setSubscribed(true);
+    setTimeout(() => setSubscribed(false), 4000);
   };
 
   const socialLinks = [
@@ -1529,7 +1586,7 @@ function Footer() {
                   key={social.label}
                   href={social.href}
                   aria-label={social.label}
-                  className="grid h-10 w-10 place-items-center rounded-full border border-slate-700/50 text-slate-400 transition-all duration-300 hover:border-[#2563EB] hover:bg-[#2563EB]/10 hover:text-white hover:shadow-lg hover:shadow-[#2563EB]/20"
+                  className="grid h-10 w-10 place-items-center rounded-full border border-slate-700/50 text-slate-400 transition-all duration-300 hover:border-[#2563EB] hover:bg-[#2563EB]/10 hover:text-white hover:shadow-lg hover:shadow-[#2563EB]/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1120]"
                 >
                   <span className="font-mono text-sm font-medium">{social.icon}</span>
                 </a>
@@ -1539,7 +1596,11 @@ function Footer() {
             <div className="mt-8">
               <p className="font-[Sora] text-sm font-semibold text-white">Subscribe to updates</p>
               <form onSubmit={handleSubmit} className="mt-3 flex max-w-sm gap-2">
+                <label htmlFor="footer-email" className="sr-only">
+                  Email address
+                </label>
                 <input
+                  id="footer-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -1549,11 +1610,21 @@ function Footer() {
                 />
                 <button
                   type="submit"
-                  className="group rounded-xl bg-[#2563EB] px-4 py-2.5 font-[Inter] text-sm font-medium text-white transition-all duration-300 hover:bg-[#2563EB]/80 hover:shadow-lg hover:shadow-[#2563EB]/30"
+                  aria-label="Subscribe"
+                  className="group rounded-xl bg-[#2563EB] px-4 py-2.5 font-[Inter] text-sm font-medium text-white transition-all duration-300 hover:bg-[#2563EB]/80 hover:shadow-lg hover:shadow-[#2563EB]/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B1120]"
                 >
                   <HiOutlineMail className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                 </button>
               </form>
+              <p
+                role="status"
+                aria-live="polite"
+                className={`mt-2 font-[Inter] text-[12.5px] text-[#34D399] transition-opacity duration-300 ${
+                  subscribed ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                You're subscribed — welcome to the mesh.
+              </p>
             </div>
           </div>
 
@@ -1621,18 +1692,26 @@ const NAV_LINKS = [
 export default function Landing() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] font-[Inter]">
+      <a
+        href="#home"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-[#2563EB] focus:px-4 focus:py-2.5 focus:font-[Inter] focus:text-sm focus:font-semibold focus:text-white focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
       <Navbar />
-      <Hero />
-      <TrustedBy />
-      <LiveStats />
-      <Features />
-      <HowItWorks />
-      <DisasterTypes />
-      <LiveMapPreview />
-      <WhyGuardianMesh />
-      <Testimonials />
-      <FAQ />
-      <FinalCTA />
+      <main>
+        <Hero />
+        <TrustedBy />
+        <LiveStats />
+        <Features />
+        <HowItWorks />
+        <DisasterTypes />
+        <LiveMapPreview />
+        <WhyGuardianMesh />
+        <Testimonials />
+        <FAQ />
+        <FinalCTA />
+      </main>
       <Footer />
     </div>
   );

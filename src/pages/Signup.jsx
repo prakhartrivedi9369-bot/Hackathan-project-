@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { FiEye, FiEyeOff, FiArrowRight, FiArrowLeft, FiMail, FiLock, FiUser, FiPhone, FiCheck } from "react-icons/fi";
 import { HiOutlineShieldCheck } from "react-icons/hi";
 import { FaUser, FaHandHoldingHeart, FaHandsHolding, FaBuildingShield } from "react-icons/fa6";
+import useAuth from "../hooks/useAuth";
+import { getRouteForRole } from "../utils/roleRoutes";
 
 /* Same signature mesh visual as Landing.jsx / Login.jsx for brand continuity. */
 function MeshField({ density = 26, className = "" }) {
@@ -58,6 +60,7 @@ const ROLES = [
 
 export default function Signup() {
   const navigate = useNavigate();
+  const auth = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [form, setForm] = useState({
@@ -86,14 +89,21 @@ export default function Signup() {
     return Object.keys(next).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
 
-    // TODO: replace with a real API call. For now this simulates a
-    // successful registration so ProtectedRoute lets the user through.
-    localStorage.setItem("guardianmesh_token", "demo-token");
-    navigate("/dashboard", { replace: true });
+    try {
+      const session = await auth.signup({
+        name: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        role: form.role,
+      });
+      navigate(getRouteForRole(session.user.role), { replace: true });
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, confirmPassword: err.message || "Unable to create account. Please try again." }));
+    }
   };
 
   const inputClass = (field) =>

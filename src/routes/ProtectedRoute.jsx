@@ -1,20 +1,33 @@
+// src/routes/ProtectedRoute.jsx
 import { Navigate, useLocation } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
+import useAuth from "../hooks/useAuth";
 
 /**
- * Wraps any route that requires an authenticated user, and renders the
- * shared dashboard shell (sidebar + topbar) around it.
+ * Wraps any route that requires an authenticated user (and optionally a
+ * specific role), rendering the shared dashboard shell around it.
  *
- * Auth is currently a demo token in localStorage — swap the check below
- * for a real auth context / API call once a backend exists. Nothing else
- * in the app needs to change: every page still just returns its content.
+ * Auth state comes from AuthContext via useAuth() — this file doesn't
+ * know or care how a session is stored.
+ *
+ * allowedRoles is optional and unused until role-specific dashboards
+ * exist; pass e.g. allowedRoles={[ROLES.GOVERNMENT]} on a route later
+ * without touching this file again.
  */
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children, allowedRoles }) {
   const location = useLocation();
-  const token = localStorage.getItem("guardianmesh_token");
+  const { isAuthenticated, isLoading, user } = useAuth();
 
-  if (!token) {
+  if (isLoading) {
+    return null; // swap for a shared loading spinner if/when one exists
+  }
+
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  if (allowedRoles?.length && !allowedRoles.includes(user?.role)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <DashboardLayout>{children}</DashboardLayout>;

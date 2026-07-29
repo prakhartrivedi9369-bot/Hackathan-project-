@@ -24,70 +24,14 @@ export default function AppRoutes() {
       <Route path="/signup" element={<Signup />} />
 
       {/* Protected */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/incidents"
-        element={
-          <ProtectedRoute>
-            <Incidents />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/incidents/:id"
-        element={
-          <ProtectedRoute>
-            <IncidentDetail />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/teams"
-        element={
-          <ProtectedRoute>
-            <Teams />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/resources"
-        element={
-          <ProtectedRoute>
-            <Resources />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/reports"
-        element={
-          <ProtectedRoute>
-            <Reports />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/insights"
-        element={
-          <ProtectedRoute>
-            <AllInsights />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <Settings />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/incidents" element={<ProtectedRoute><Incidents /></ProtectedRoute>} />
+      <Route path="/incidents/:id" element={<ProtectedRoute><IncidentDetail /></ProtectedRoute>} />
+      <Route path="/teams" element={<ProtectedRoute><Teams /></ProtectedRoute>} />
+      <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+      <Route path="/insights" element={<ProtectedRoute><AllInsights /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<NotFound />} />

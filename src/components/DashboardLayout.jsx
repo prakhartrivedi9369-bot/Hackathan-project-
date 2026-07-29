@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   HiOutlineHome,
   HiOutlineExclamationCircle,
@@ -15,7 +15,8 @@ import {
   HiOutlineSun,
   HiOutlineMoon,
 } from "react-icons/hi";
-import { useTheme } from "../context/ThemeContext"; // <-- ADD THIS
+import { useTheme } from "../context/ThemeContext";
+import useAuth from "../hooks/useAuth";
 
 const NAV_ITEMS = [
   { label: "Dashboard", path: "/dashboard", icon: HiOutlineHome },
@@ -29,12 +30,14 @@ const NAV_ITEMS = [
 
 export default function DashboardLayout({ children }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isDark, toggleTheme } = useTheme(); // <-- ADD THIS
+  const { isDark, toggleTheme } = useTheme();
+  const { logout } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("guardianmesh_token");
-    window.location.href = "/login";
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
   };
 
   return (
