@@ -129,3 +129,5 @@ The objective is to enable faster decision-making, improve collaboration between
 This repository is currently under active development.
 
 Features, UI/UX, and functionality are continuously being improved throughout the development process.
+
+...
